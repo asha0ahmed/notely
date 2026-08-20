@@ -168,3 +168,12 @@ html, body {
   text-rendering: optimizeLegibility;
   font-feature-settings: 'liga';
 }
+
+/* Hide the scrollbar on the hero slider (Chrome, Safari, Firefox, Edge) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
