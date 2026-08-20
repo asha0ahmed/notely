@@ -101,99 +101,111 @@ export function renderHeader(activePage = 'home') {
             }
           </div>
 
-          <!-- Mobile 3-Dot Options Trigger Button -->
+          <!-- Mobile Hamburger Menu Trigger Button -->
           <div class="flex items-center gap-2 sm:hidden">
             <button id="theme-toggle-btn-mobile-quick" class="p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
               <span class="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
               <span class="material-symbols-outlined text-xl block dark:hidden">dark_mode</span>
             </button>
 
-            <button id="mobile-3dot-menu-btn" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center" title="Options Menu">
-              <span class="material-symbols-outlined text-2xl">more_vert</span>
+            <button id="mobile-3dot-menu-btn" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center" title="Menu">
+              <span class="material-symbols-outlined text-2xl">menu</span>
             </button>
           </div>
 
         </div>
-      </div>
-
-      <!-- Mobile Responsive 3-Dot Dropdown Options Sheet -->
-      <div id="mobile-3dot-menu" class="hidden sm:hidden border-t border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg px-4 py-4 space-y-4 shadow-xl">
-        <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Navigation Options</div>
-        <div class="grid grid-cols-2 gap-2">
-          <a href="./index.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'home' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
-            <span class="material-symbols-outlined text-base">home</span>
-            <span>Home</span>
-          </a>
-          <a href="./notes.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'notes' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
-            <span class="material-symbols-outlined text-base">description</span>
-            <span>Notes</span>
-          </a>
-          <a href="./jobs.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'jobs' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
-            <span class="material-symbols-outlined text-base">work</span>
-            <span>Jobs</span>
-          </a>
-          ${
-            user && user.isStaff
-              ? `<a href="./admin.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">
-                  <span class="material-symbols-outlined text-base">admin_panel_settings</span>
-                  <span>Admin</span>
-                </a>`
-              : ''
-          }
-        </div>
-
-        <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">Quick Actions</div>
-        <div class="space-y-2">
-          <!-- Mobile Theme Switch Option -->
-          <button id="mobile-theme-option-btn" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <span class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-base hidden dark:block">light_mode</span>
-              <span class="material-symbols-outlined text-base block dark:hidden">dark_mode</span>
-              <span>Theme Switcher</span>
-            </span>
-            <span id="theme-status-text" class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
-              ${document.documentElement.classList.contains('dark') ? 'Dark' : 'Light'}
-            </span>
-          </button>
-
-          <!-- Upload Note Button Option -->
-          <a href="./notes.html?action=upload" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all">
-            <span class="material-symbols-outlined text-base">upload_file</span>
-            <span>Upload Course Note</span>
-          </a>
-        </div>
-
-        <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">Account Options</div>
-        ${
-          user
-            ? `
-          <div class="space-y-2">
-            <a href="./profile.html" class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-bold">
-              <img src="${user.avatar}" alt="${user.name}" class="w-8 h-8 rounded-lg object-cover" />
-              <div class="truncate">
-                <div class="truncate">${user.name}</div>
-                <div class="text-[10px] text-gray-400 font-normal truncate">${user.email}</div>
-              </div>
-            </a>
-            <button id="mobile-logout-btn" class="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
-              <span class="material-symbols-outlined text-base">logout</span>
-              <span>Sign Out Account</span>
-            </button>
-          </div>
-        `
-            : `
-          <div class="grid grid-cols-2 gap-2">
-            <a href="./login.html" class="py-2.5 text-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs font-bold">
-              Sign In
-            </a>
-            <a href="./register.html" class="py-2.5 text-center rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md">
-              Register
-            </a>
-          </div>
-        `
-        }
       </div>
     </header>
+
+    <!-- Dark Overlay Behind Side Panel -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300 sm:hidden"></div>
+
+    <!-- Mobile Slide-In Side Menu -->
+    <div id="mobile-3dot-menu" class="fixed top-0 right-0 h-full w-[80%] max-w-xs bg-white dark:bg-gray-900 z-50 shadow-2xl px-5 py-5 space-y-4 overflow-y-auto sm:hidden transform translate-x-full transition-transform duration-300 ease-in-out">
+
+      <!-- Close Button + Panel Header -->
+      <div class="flex items-center justify-between pb-2">
+        <span class="text-sm font-extrabold text-gray-900 dark:text-white">Menu</span>
+        <button id="mobile-menu-close-btn" class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Navigation Options</div>
+      <div class="grid grid-cols-2 gap-2">
+        <a href="./index.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'home' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
+          <span class="material-symbols-outlined text-base">home</span>
+          <span>Home</span>
+        </a>
+        <a href="./notes.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'notes' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
+          <span class="material-symbols-outlined text-base">description</span>
+          <span>Notes</span>
+        </a>
+        <a href="./jobs.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'jobs' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
+          <span class="material-symbols-outlined text-base">work</span>
+          <span>Jobs</span>
+        </a>
+        ${
+          user && user.isStaff
+            ? `<a href="./admin.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">
+                <span class="material-symbols-outlined text-base">admin_panel_settings</span>
+                <span>Admin</span>
+              </a>`
+            : ''
+        }
+      </div>
+
+      <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">Quick Actions</div>
+      <div class="space-y-2">
+        <!-- Mobile Theme Switch Option -->
+        <button id="mobile-theme-option-btn" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-xs font-bold text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <span class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-base hidden dark:block">light_mode</span>
+            <span class="material-symbols-outlined text-base block dark:hidden">dark_mode</span>
+            <span>Theme Switcher</span>
+          </span>
+          <span id="theme-status-text" class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+            ${document.documentElement.classList.contains('dark') ? 'Dark' : 'Light'}
+          </span>
+        </button>
+
+        <!-- Upload Note Button Option -->
+        <a href="./notes.html?action=upload" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all">
+          <span class="material-symbols-outlined text-base">upload_file</span>
+          <span>Upload Course Note</span>
+        </a>
+      </div>
+
+      <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">Account Options</div>
+      ${
+        user
+          ? `
+        <div class="space-y-2">
+          <a href="./profile.html" class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-bold">
+            <img src="${user.avatar}" alt="${user.name}" class="w-8 h-8 rounded-lg object-cover" />
+            <div class="truncate">
+              <div class="truncate">${user.name}</div>
+              <div class="text-[10px] text-gray-400 font-normal truncate">${user.email}</div>
+            </div>
+          </a>
+          <button id="mobile-logout-btn" class="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span>Sign Out Account</span>
+          </button>
+        </div>
+      `
+          : `
+        <div class="grid grid-cols-2 gap-2">
+          <a href="./login.html" class="py-2.5 text-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs font-bold">
+            Sign In
+          </a>
+          <a href="./register.html" class="py-2.5 text-center rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md">
+            Register
+          </a>
+        </div>
+      `
+      }
+    </div>
   `;
 }
 
@@ -253,19 +265,49 @@ export function setupHeaderEvents() {
   document.getElementById('theme-toggle-btn-mobile-quick')?.addEventListener('click', handleThemeToggle);
   document.getElementById('mobile-theme-option-btn')?.addEventListener('click', handleThemeToggle);
 
-  // Mobile 3-Dot Options Menu Toggle
-  const threeDotBtn = document.getElementById('mobile-3dot-menu-btn');
-  const threeDotMenu = document.getElementById('mobile-3dot-menu');
-  if (threeDotBtn && threeDotMenu) {
-    threeDotBtn.addEventListener('click', (e) => {
+  // Mobile Slide-In Side Menu Toggle
+  const menuBtn = document.getElementById('mobile-3dot-menu-btn');
+  const sideMenu = document.getElementById('mobile-3dot-menu');
+  const overlay = document.getElementById('mobile-menu-overlay');
+  const closeBtn = document.getElementById('mobile-menu-close-btn');
+
+  const openMenu = () => {
+    sideMenu.classList.remove('translate-x-full');
+    overlay.classList.remove('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = 'hidden'; // lock background scroll
+  };
+
+  const closeMenu = () => {
+    sideMenu.classList.add('translate-x-full');
+    overlay.classList.add('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = ''; // restore scroll
+  };
+
+  if (menuBtn && sideMenu && overlay) {
+    menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      threeDotMenu.classList.toggle('hidden');
+      openMenu();
     });
 
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!threeDotMenu.contains(e.target) && !threeDotBtn.contains(e.target)) {
-        threeDotMenu.classList.add('hidden');
+    // Close when clicking the overlay (outside the panel)
+    overlay.addEventListener('click', closeMenu);
+
+    // Close when clicking the X button inside the panel
+    closeBtn?.addEventListener('click', closeMenu);
+
+    // Close when pressing Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMenu();
+    });
+  }
+
+    // Auto-close the side menu when any link or button inside it is tapped
+  if (sideMenu) {
+    sideMenu.querySelectorAll('a, button').forEach((el) => {
+      if (el.id !== 'mobile-menu-close-btn') { // close btn already handled above
+        el.addEventListener('click', () => {
+          closeMenu();
+        });
       }
     });
   }
