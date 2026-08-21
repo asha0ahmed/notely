@@ -25,13 +25,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const profile = await fetchProfile(session.id);
+  // ── Which profile are we looking at? ──────────────────────────────────────
+  // If the link has ?userId=..., that's the profile to show (someone else's).
+  // Otherwise, fall back to the logged-in user's own id.
+  const urlParams    = new URLSearchParams(window.location.search);
+  const viewedUserId = urlParams.get('userId') || session.id;
+  const isOwnProfile = viewedUserId === session.id;
+
+  const profile = await fetchProfile(viewedUserId);
 
   if (!profile || !profile.is_profile_complete) {
-    renderIncompleteProfile(session.email);
-    openModal(session, profile);
+    if (isOwnProfile) {
+      renderIncompleteProfile(session.email);
+      openModal(session, profile);
+    } else {
+      renderNotFound();
+    }
   } else {
-    renderFullProfile(session, profile);
+    renderFullProfile(session, profile, isOwnProfile, viewedUserId);
   }
 
   document.getElementById('close-edit-modal-btn')?.addEventListener('click', closeModal);
@@ -78,6 +89,16 @@ function renderNotLoggedIn() {
         <a href="./login.html" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md">Sign In Now</a>
         <a href="./register.html" class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-bold rounded-xl text-xs">Create Account</a>
       </div>
+    </div>`;
+}
+
+// ── Render: viewed profile not available ──────────────────────────────────────
+function renderNotFound() {
+  document.getElementById('profile-content').innerHTML = `
+    <div class="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 p-8 space-y-3 max-w-lg mx-auto">
+      <span class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600">person_off</span>
+      <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">This profile isn't available.</p>
+      <a href="./notes.html" class="inline-block text-xs font-bold text-indigo-600 hover:underline">Back to Notes</a>
     </div>`;
 }
 
@@ -144,7 +165,7 @@ function noteCardHtml(note) {
 }
 
 // ── Render: full profile ──────────────────────────────────────────────────────
-async function renderFullProfile(session, profile) {
+async function renderFullProfile(session, profile, isOwnProfile = true, viewedUserId = session.id) {
   const container = document.getElementById('profile-content');
 
   const isUniversity     = profile.institution_type === 'university';
@@ -153,8 +174,8 @@ async function renderFullProfile(session, profile) {
     ? `${profile.department || ''} · ${profile.batch || ''}`
     : `${profile.class_name || ''} · ${profile.group_name || ''}`;
 
-  // Fetch uploads immediately
-  const myUploads = await fetchMyUploads(session.id);
+  // Fetch uploads for whichever profile we're viewing (not always the logged-in user)
+  const myUploads = await fetchMyUploads(viewedUserId);
 
   container.innerHTML = `
     <!-- Profile Card -->
@@ -166,7 +187,7 @@ async function renderFullProfile(session, profile) {
           </div>
           <div class="space-y-1">
             <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white font-headline">${profile.full_name}</h1>
-            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">${session.email}</p>
+            ${isOwnProfile ? `<p class="text-xs font-semibold text-gray-500 dark:text-gray-400">${session.email}</p>` : ''}
             <div class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400 font-bold pt-0.5">
               <span class="material-symbols-outlined text-base">${isUniversity ? 'school' : 'menu_book'}</span>
               <span>${institutionLabel}</span>
@@ -175,6 +196,7 @@ async function renderFullProfile(session, profile) {
           </div>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
+          ${isOwnProfile ? `
           <button id="open-edit-profile-btn"
             class="px-5 py-2.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 font-bold rounded-2xl text-xs flex items-center gap-2 transition-all">
             <span class="material-symbols-outlined text-base">edit</span> Edit Profile
@@ -183,6 +205,7 @@ async function renderFullProfile(session, profile) {
             class="px-5 py-2.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 font-bold rounded-2xl text-xs flex items-center gap-2 transition-all border border-rose-200 dark:border-rose-900/50">
             <span class="material-symbols-outlined text-base">delete_forever</span> Delete Account
           </button>
+          ` : ''}
         </div>
       </div>
 
