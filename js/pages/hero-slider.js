@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const viewport = document.getElementById('hero-slider');
   const track = document.getElementById('hero-slider-track');
@@ -9,15 +8,43 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentIndex = 0;
   let autoplayTimer = null;
 
-  track.style.transition = 'transform 0.7s ease-in-out';
+  // instantly place a slide at a starting position, no animation
+  function placeInstant(slide, className) {
+    slide.style.transition = 'none';
+    slide.classList.remove('pos-left', 'pos-center', 'pos-right');
+    slide.classList.add(className);
+    void slide.offsetWidth; // forces the browser to apply the position now
+    slide.style.transition = '';
+  }
 
-  function goToSlide(index) {
-    currentIndex = (index + totalSlides) % totalSlides;
-    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+  // direction: 1 = forward (next), -1 = backward (previous)
+  function showSlide(index, direction) {
+    const nextIndex = (index + totalSlides) % totalSlides;
+    if (nextIndex === currentIndex) return;
+
+    const currentSlide = slides[currentIndex];
+    const nextSlide = slides[nextIndex];
+
+    // put the incoming slide on the correct side BEFORE animating
+    placeInstant(nextSlide, direction === 1 ? 'pos-right' : 'pos-left');
+
+    requestAnimationFrame(() => {
+      currentSlide.classList.remove('pos-center');
+      currentSlide.classList.add(direction === 1 ? 'pos-left' : 'pos-right');
+
+      nextSlide.classList.remove('pos-left', 'pos-right');
+      nextSlide.classList.add('pos-center');
+    });
+
+    currentIndex = nextIndex;
   }
 
   function nextSlide() {
-    goToSlide(currentIndex + 1);
+    showSlide(currentIndex + 1, 1);
+  }
+
+  function prevSlide() {
+    showSlide(currentIndex - 1, -1);
   }
 
   function startAutoplay() {
@@ -29,54 +56,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if (autoplayTimer) clearInterval(autoplayTimer);
   }
 
-  // ── Drag / swipe support ──
-  let isDragging = false;
+  // ── Swipe support ──
   let startX = 0;
+  let isSwiping = false;
 
-  function dragStart(x) {
-    isDragging = true;
-    startX = x;
+  viewport.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isSwiping = true;
     stopAutoplay();
-    track.style.transition = 'none'; // no animation while actively dragging
-  }
+  });
 
-  function dragMove(x) {
-    if (!isDragging) return;
-    const deltaX = x - startX;
-    const dragPercent = (deltaX / viewport.offsetWidth) * 100;
-    track.style.transform = `translateX(calc(-${currentIndex * 100}% + ${dragPercent}%))`;
-  }
+  viewport.addEventListener('touchend', (e) => {
+    if (!isSwiping) return;
+    isSwiping = false;
 
-  function dragEnd(x) {
-    if (!isDragging) return;
-    isDragging = false;
-    track.style.transition = 'transform 0.7s ease-in-out'; // animation back on
-
-    const deltaX = x - startX;
-    const threshold = viewport.offsetWidth * 0.15; // must drag at least 15% of width to count
+    const deltaX = e.changedTouches[0].clientX - startX;
+    const threshold = 40;
 
     if (deltaX < -threshold) {
-      goToSlide(currentIndex + 1); // dragged left → next slide
+      nextSlide(); // swiped left → next
     } else if (deltaX > threshold) {
-      goToSlide(currentIndex - 1); // dragged right → previous slide
-    } else {
-      goToSlide(currentIndex); // snap back to same slide
+      prevSlide(); // swiped right → previous
     }
 
     startAutoplay();
-  }
+  });
 
-  // Touch events (mobile)
-  viewport.addEventListener('touchstart', (e) => dragStart(e.touches[0].clientX));
-  viewport.addEventListener('touchmove', (e) => dragMove(e.touches[0].clientX));
-  viewport.addEventListener('touchend', (e) => dragEnd(e.changedTouches[0].clientX));
-
-  // Mouse events (desktop)
-  viewport.addEventListener('mousedown', (e) => dragStart(e.clientX));
-  viewport.addEventListener('mousemove', (e) => dragMove(e.clientX));
-  viewport.addEventListener('mouseup', (e) => dragEnd(e.clientX));
-  viewport.addEventListener('mouseleave', (e) => {
-    if (isDragging) dragEnd(e.clientX);
+  // start with the first slide visible, others parked to the right
+  slides.forEach((slide, i) => {
+    placeInstant(slide, i === 0 ? 'pos-center' : 'pos-right');
   });
 
   startAutoplay();
