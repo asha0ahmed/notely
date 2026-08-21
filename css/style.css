@@ -186,7 +186,7 @@ html, body {
   height: 100%;
   opacity: 0;
   z-index: 1;
-  transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
+  transition: transform 0.9s ease-in-out, opacity 0.7s ease-in-out;
   pointer-events: none;
 }
 
@@ -207,4 +207,18 @@ html, body {
   opacity: 1;
   z-index: 3;
   pointer-events: auto;
+}
+
+.hero-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.3s ease, width 0.3s ease;
+}
+
+.hero-dot.is-current {
+  background: #ffffff;
+  width: 20px;
 }
