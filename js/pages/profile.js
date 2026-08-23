@@ -171,7 +171,7 @@ async function renderFullProfile(session, profile, isOwnProfile = true, viewedUs
   const isUniversity     = profile.institution_type === 'university';
   const institutionLabel = profile.institution_name || '—';
   const subLabel         = isUniversity
-    ? `${profile.department || ''} · ${profile.batch || ''}`
+    ? ''
     : `${profile.class_name || ''} · ${profile.group_name || ''}`;
 
   // Fetch uploads for whichever profile we're viewing (not always the logged-in user)
@@ -212,18 +212,6 @@ async function renderFullProfile(session, profile, isOwnProfile = true, viewedUs
       <!-- Info Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-100 dark:border-gray-800 text-xs">
         ${isUniversity ? `
-          <div class="bg-gray-50 dark:bg-gray-800/40 p-3.5 rounded-2xl">
-            <span class="text-gray-400 text-[11px] block">Department</span>
-            <span class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 block truncate">${profile.department || 'N/A'}</span>
-          </div>
-          <div class="bg-gray-50 dark:bg-gray-800/40 p-3.5 rounded-2xl">
-            <span class="text-gray-400 text-[11px] block">Batch</span>
-            <span class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 block">${profile.batch || 'N/A'}</span>
-          </div>
-          <div class="bg-gray-50 dark:bg-gray-800/40 p-3.5 rounded-2xl">
-            <span class="text-gray-400 text-[11px] block">Registration No</span>
-            <span class="font-bold text-gray-800 dark:text-gray-200 mt-0.5 block">${profile.reg_no || 'N/A'}</span>
-          </div>
         ` : `
           <div class="bg-gray-50 dark:bg-gray-800/40 p-3.5 rounded-2xl">
             <span class="text-gray-400 text-[11px] block">Class</span>
@@ -334,9 +322,6 @@ function openModal(session, existingProfile = null) {
   if (existingProfile) {
     document.getElementById('profile-name-input').value        = existingProfile.full_name || '';
     document.getElementById('profile-bio-input').value         = existingProfile.bio || '';
-    document.getElementById('profile-dept-input').value        = existingProfile.department || '';
-    document.getElementById('profile-batch-input').value       = existingProfile.batch || '';
-    document.getElementById('profile-reg-input').value         = existingProfile.reg_no || '';
     document.getElementById('profile-school-name-input').value = existingProfile.institution_name || '';
     document.getElementById('profile-class-input').value       = existingProfile.class_name || '';
     document.getElementById('profile-group-input').value       = existingProfile.group_name || '';
@@ -460,15 +445,10 @@ function setupModalEvents(session, existingProfile) {
 
     if (instType === 'university') {
       const univName = document.getElementById('profile-univ-input').value.trim();
-      const dept     = document.getElementById('profile-dept-input').value.trim();
-      const batch    = document.getElementById('profile-batch-input').value.trim();
-      const regNo    = document.getElementById('profile-reg-input').value.trim();
 
       if (!univName) { showError(errEl2, 'Please enter your university name.'); return; }
-      if (!dept)     { showError(errEl2, 'Department is required.'); return; }
-      if (!batch)    { showError(errEl2, 'Batch / Year is required.'); return; }
 
-      payload = { ...payload, institution_name: univName, university_id: null, department: dept, batch, reg_no: regNo || null, class_name: null, group_name: null };
+      payload = { ...payload, institution_name: univName, university_id: null, department: null, batch: null, reg_no: null, class_name: null, group_name: null };
 
     } else {
       const schoolName = document.getElementById('profile-school-name-input').value.trim();
