@@ -262,6 +262,7 @@ function setupUploadForm() {
       class_name:       meta.class_name     || null,
       subject:          meta.subject        || null,
       chapter:          meta.chapter        || null,
+      is_approved:      false,   // pending admin approval
     });
 
     if (dbErr) {
@@ -270,7 +271,7 @@ function setupUploadForm() {
       return;
     }
 
-    appStore.showToast('Note published successfully!', 'success');
+    appStore.showToast('Note submitted! It will be visible after admin review.', 'info');
     document.getElementById('upload-modal').classList.add('hidden');
     resetUploadForm();
     renderNotes();
@@ -398,7 +399,7 @@ async function renderNotes() {
   const typeFilter = document.getElementById('notes-type-filter')?.value || '';
   const catFilter  = document.getElementById('notes-category-filter')?.value || '';
 
-  let query_ = supabase.from('notes').select('*').eq('is_active', true).order('created_at', { ascending: false });
+  let query_ = supabase.from('notes').select('*').eq('is_active', true).eq('is_approved', true).order('created_at', { ascending: false });
   if (typeFilter) query_ = query_.eq('institution_type', typeFilter);
   if (catFilter)  query_ = query_.eq('category', catFilter);
 
@@ -430,6 +431,13 @@ async function renderNotes() {
       currentRatingsMap[r.note_id].count += 1;
       if (session && r.user_id === session.id) currentRatingsMap[r.note_id].userRating = r.rating;
     });
+  }
+
+    // Fetch which notes THIS user has saved (for the heart button state)
+  let savedNoteIds = new Set();
+  if (session && noteIds.length) {
+    const { data: sd } = await supabase.from('saved_notes').select('note_id').eq('user_id', session.id);
+    savedNoteIds = new Set((sd || []).map((s) => s.note_id));
   }
 
   // Client-side search filter
@@ -468,6 +476,9 @@ async function renderNotes() {
           <div class="flex items-center justify-between">
             <span class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold">${badge}</span>
             <div class="relative">
+              <button class="save-note-btn p-1.5 rounded-xl transition-colors flex items-center justify-center ${savedNoteIds.has(note.id) ? 'text-rose-500' : 'text-gray-400 hover:text-rose-500'}" data-id="${note.id}" data-saved="${savedNoteIds.has(note.id)}">
+                <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' ${savedNoteIds.has(note.id) ? 1 : 0}">favorite</span>
+              </button>
               <button class="note-3dot-btn p-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center" data-id="${note.id}">
                 <span class="material-symbols-outlined text-lg">more_vert</span>
               </button>
@@ -534,6 +545,48 @@ async function renderNotes() {
       </div>`;
   }).join('');
 
+    // ── Save / unsave note (heart button) ─────────────────────────────────────
+  document.querySelectorAll('.save-note-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const session = getSession();
+      if (!session) {
+        appStore.showToast('Please sign in to save notes.', 'error');
+        return;
+      }
+
+      const noteId    = Number(btn.dataset.id);
+      const isSaved   = btn.dataset.saved === 'true';
+      const icon      = btn.querySelector('.material-symbols-outlined');
+
+      btn.disabled = true;
+
+      if (isSaved) {
+        // Currently saved → remove it
+        const { error } = await supabase.from('saved_notes').delete().eq('user_id', session.id).eq('note_id', noteId);
+        if (!error) {
+          btn.dataset.saved = 'false';
+          btn.classList.remove('text-rose-500');
+          btn.classList.add('text-gray-400', 'hover:text-rose-500');
+          icon.style.fontVariationSettings = "'FILL' 0";
+          appStore.showToast('Removed from Read Later.', 'info');
+        }
+      } else {
+        // Not saved → save it
+        const { error } = await supabase.from('saved_notes').insert({ user_id: session.id, note_id: noteId });
+        if (!error) {
+          btn.dataset.saved = 'true';
+          btn.classList.remove('text-gray-400', 'hover:text-rose-500');
+          btn.classList.add('text-rose-500');
+          icon.style.fontVariationSettings = "'FILL' 1";
+          appStore.showToast('Saved for later!', 'success');
+        }
+      }
+
+      btn.disabled = false;
+    });
+  });
+  
   // ── Event listeners ───────────────────────────────────────────────────────
   document.querySelectorAll('.note-3dot-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {

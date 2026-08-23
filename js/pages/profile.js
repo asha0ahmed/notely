@@ -74,6 +74,25 @@ async function fetchMyUploads(userId) {
   return data || [];
 }
 
+
+// ── Fetch user's saved notes ──────────────────────────────────────────────────
+async function fetchSavedNotes(userId) {
+  const { data: savedRows, error: savedErr } = await supabase
+    .from('saved_notes')
+    .select('note_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (savedErr || !savedRows?.length) return [];
+
+  const noteIds = savedRows.map((r) => r.note_id);
+  const { data: notesData, error: notesErr } = await supabase
+    .from('notes')
+    .select('id, title, course, institution_name, institution_type, class_name, subject, category, tags, download_count, avg_rating, rating_count, created_at, is_active')
+    .in('id', noteIds);
+  if (notesErr) return [];
+  return notesData || [];
+}
+
 // ── Render: not logged in ─────────────────────────────────────────────────────
 function renderNotLoggedIn() {
   document.getElementById('profile-content').innerHTML = `
@@ -176,6 +195,7 @@ async function renderFullProfile(session, profile, isOwnProfile = true, viewedUs
 
   // Fetch uploads for whichever profile we're viewing (not always the logged-in user)
   const myUploads = await fetchMyUploads(viewedUserId);
+  const mySavedNotes = isOwnProfile ? await fetchSavedNotes(viewedUserId) : [];
 
   container.innerHTML = `
     <!-- Profile Card -->
@@ -262,13 +282,15 @@ async function renderFullProfile(session, profile, isOwnProfile = true, viewedUs
 
       <!-- Saved Notes (hidden by default) -->
       <div id="saved-notes-section" class="hidden">
-        <div class="py-12 text-center bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 p-8 space-y-2">
-          <span class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600">bookmark</span>
-          <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">No saved notes yet. Bookmark notes while browsing!</p>
-          <a href="./notes.html" class="inline-block text-xs font-bold text-indigo-600 hover:underline">Explore Academic Notes</a>
-        </div>
+        ${mySavedNotes.length === 0
+          ? `<div class="py-12 text-center bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 p-8 space-y-2">
+               <span class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600">bookmark</span>
+               <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">No saved notes yet. Bookmark notes while browsing!</p>
+               <a href="./notes.html" class="inline-block text-xs font-bold text-indigo-600 hover:underline">Explore Academic Notes</a>
+             </div>`
+          : `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">${mySavedNotes.map(noteCardHtml).join('')}</div>`
+        }
       </div>
-    </div>
   `;
 
   // Edit button

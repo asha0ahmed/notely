@@ -81,6 +81,7 @@ async function loadDashboard() {
     { data: reports },
     { data: allNotes },
     { data: pendingJobs },
+    { data: pendingNotes },
     { data: allJobs },
     { data: users },
     { data: profiles },
@@ -91,6 +92,7 @@ async function loadDashboard() {
     supabase.from('reports').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
     supabase.from('notes').select('id, title, course, institution_name, institution_type, class_name, is_active, download_count, avg_rating, uploaded_by_id, created_at').order('created_at', { ascending: false }),
     supabase.from('jobs').select('*').eq('is_active', false).order('created_at', { ascending: false }),
+    supabase.from('notes').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
     supabase.from('jobs').select('id, posted_by_id').eq('is_active', true),
     supabase.from('users').select('id, email, is_staff, is_active, date_joined').order('date_joined', { ascending: false }),
     supabase.from('profiles').select('user_id, full_name, institution_name, institution_type'),
@@ -134,10 +136,12 @@ async function loadDashboard() {
   document.getElementById('stat-users').textContent   = (users || []).length;
   document.getElementById('reports-count-badge').textContent = (reports || []).length;
   document.getElementById('jobs-pending-badge').textContent  = (pendingJobs || []).length;
+  document.getElementById('notes-pending-badge').textContent = (pendingNotes || []).length;
 
   // Render sections
   renderReports(reports || [], noteTitleMap, reporterMap);
   renderPendingJobs(pendingJobs || [], profileMap);
+  renderPendingNoteApprovals(pendingNotes || [], profileMap);
   renderNotes(allNotes || [], profileMap);
   renderUsers(users || [], profileMap, noteCountMap, jobCountMap);
 }
@@ -256,6 +260,70 @@ function renderPendingJobs(jobs, profileMap) {
     btn.addEventListener('click', async () => {
       await supabase.from('jobs').delete().eq('id', btn.dataset.id);
       showToast('Job rejected and removed.', 'info');
+      await loadDashboard();
+    });
+  });
+}
+
+// ── Pending Note Approvals ────────────────────────────────────────────────────
+function renderPendingNoteApprovals(notes, profileMap) {
+  const container = document.getElementById('admin-note-approvals-list');
+  if (!container) return;
+
+  if (!notes.length) {
+    container.innerHTML = `<p class="text-xs text-gray-400 py-4 italic text-center">No notes waiting for approval.</p>`;
+    return;
+  }
+
+  container.innerHTML = notes.map((n) => {
+    const uploader = profileMap[n.uploaded_by_id];
+    const name      = uploader?.full_name || `User #${n.uploaded_by_id}`;
+    const inst      = uploader?.institution_name || '—';
+    const badge     = n.institution_type === 'university' ? (n.course || '—') : (n.class_name || 'School');
+    const date      = new Date(n.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+
+    return `
+      <div class="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 p-4 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div class="space-y-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 text-[10px] font-bold uppercase">${badge}</span>
+              <span class="text-[10px] text-gray-400">Uploaded: ${date}</span>
+            </div>
+            <h3 class="font-bold text-gray-900 dark:text-white text-sm">${n.title}</h3>
+            <p class="text-xs text-gray-500">${n.institution_name || '—'}</p>
+            <p class="text-[11px] text-indigo-500">Uploaded by: ${name} (${inst})</p>
+          </div>
+          <div class="flex gap-2 flex-shrink-0">
+            <button class="approve-note-btn px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all"
+              data-id="${n.id}">
+              <span class="material-symbols-outlined text-sm align-middle">check</span> Approve
+            </button>
+            <button class="reject-note-btn px-4 py-2 bg-rose-50 dark:bg-rose-950/50 text-rose-600 text-xs font-bold rounded-xl hover:bg-rose-100 transition-all"
+              data-id="${n.id}">
+              <span class="material-symbols-outlined text-sm align-middle">close</span> Reject
+            </button>
+          </div>
+        </div>
+        ${n.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">${n.description}</p>` : ''}
+      </div>`;
+  }).join('');
+
+  // Approve
+  container.querySelectorAll('.approve-note-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await supabase.from('notes').update({ is_approved: true }).eq('id', btn.dataset.id);
+      showToast('Note approved and published!', 'success');
+      await loadDashboard();
+    });
+  });
+
+  // Reject (delete)
+  container.querySelectorAll('.reject-note-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Reject and permanently delete this note?')) return;
+      await supabase.from('notes').delete().eq('id', btn.dataset.id);
+      showToast('Note rejected and removed.', 'info');
       await loadDashboard();
     });
   });
