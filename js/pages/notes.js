@@ -1,7 +1,10 @@
 // js/pages/notes.js
 import { appStore, UNIVERSITIES_LIST } from '../store.js';
 import { renderHeader, renderFooter, setupHeaderEvents } from '../components.js';
-import { supabase, NOTES_BUCKET } from '../supabase.js';
+import { supabase } from '../supabase.js';
+
+   const CLOUDINARY_CLOUD_NAME   = 'iz9knbtr';
+   const CLOUDINARY_UPLOAD_PRESET = 'notely_notes';
 
 // ── Session helper ────────────────────────────────────────────────────────────
 function getSession() {
@@ -236,7 +239,7 @@ function setupUploadForm() {
 
     let fileUrl = '';
     try {
-      fileUrl = await uploadToSupabase(selectedPdfFile, session.id);
+       fileUrl = await uploadToCloudinary(selectedPdfFile);
     } catch (err) {
       showUploadError(errEl, 'Upload failed: ' + (err.message || 'Unknown error'));
       submitBtn.disabled = false; submitBtn.textContent = 'Publish Academic Note';
@@ -275,35 +278,45 @@ function setupUploadForm() {
   });
 }
 
-// ── Supabase Storage upload ───────────────────────────────────────────────────
-async function uploadToSupabase(file, userId) {
-  const timestamp = Date.now();
-  const safeName  = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const filePath  = `${userId}/${timestamp}_${safeName}`;
-
+async function uploadToCloudinary(file) {
   const progressWrap = document.getElementById('upload-progress-wrap');
   const progressFill = document.getElementById('progress-bar-fill');
   const progressPct  = document.getElementById('progress-pct');
   progressWrap?.classList.add('show');
 
-  const { data, error } = await supabase.storage
-    .from(NOTES_BUCKET)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: 'application/pdf',
-      onUploadProgress: (progress) => {
-        const pct = Math.round((progress.loaded / progress.total) * 100);
-        if (progressFill) progressFill.style.width = pct + '%';
-        if (progressPct)  progressPct.textContent   = pct + '%';
-      },
-    });
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'notes');
 
-  progressWrap?.classList.remove('show');
-  if (error) throw error;
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`);
 
-  const { data: urlData } = supabase.storage.from(NOTES_BUCKET).getPublicUrl(data.path);
-  return urlData.publicUrl;
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.round((e.loaded / e.total) * 100);
+      if (progressFill) progressFill.style.width = pct + '%';
+      if (progressPct)  progressPct.textContent   = pct + '%';
+    };
+
+    xhr.onload = () => {
+      progressWrap?.classList.remove('show');
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        resolve(data.secure_url);
+      } else {
+        reject(new Error('Cloudinary upload failed (status ' + xhr.status + ')'));
+      }
+    };
+
+    xhr.onerror = () => {
+      progressWrap?.classList.remove('show');
+      reject(new Error('Network error during upload.'));
+    };
+
+    xhr.send(formData);
+  });
 }
 
 // ── Reset upload form ─────────────────────────────────────────────────────────
