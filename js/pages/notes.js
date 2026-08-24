@@ -262,7 +262,7 @@ function setupUploadForm() {
       class_name:       meta.class_name     || null,
       subject:          meta.subject        || null,
       chapter:          meta.chapter        || null,
-      is_approved:      false,   // pending admin approval
+      is_approved:      true,
     });
 
     if (dbErr) {
@@ -271,7 +271,7 @@ function setupUploadForm() {
       return;
     }
 
-    appStore.showToast('Note submitted! It will be visible after admin review.', 'info');
+    appStore.showToast('Note uploaded and published!', 'success');
     document.getElementById('upload-modal').classList.add('hidden');
     resetUploadForm();
     renderNotes();
