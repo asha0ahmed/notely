@@ -82,15 +82,24 @@ async function fetchSavedNotes(userId) {
     .select('note_id')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
-  if (savedErr || !savedRows?.length) return [];
+  if (savedErr) {
+    console.error('[Saved notes fetch error]', savedErr.message);
+    return [];
+  }
+  if (!savedRows?.length) return [];
 
   const noteIds = savedRows.map((r) => r.note_id);
   const { data: notesData, error: notesErr } = await supabase
     .from('notes')
     .select('id, title, course, institution_name, institution_type, class_name, subject, category, tags, download_count, avg_rating, rating_count, created_at, is_active')
     .in('id', noteIds);
-  if (notesErr) return [];
-  return notesData || [];
+  if (notesErr) {
+    console.error('[Saved note details fetch error]', notesErr.message);
+    return [];
+  }
+
+  const notesById = new Map((notesData || []).map((note) => [note.id, note]));
+  return noteIds.map((noteId) => notesById.get(noteId)).filter(Boolean);
 }
 
 // ── Render: not logged in ─────────────────────────────────────────────────────
