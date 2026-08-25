@@ -73,15 +73,42 @@ const isNativeApp = () =>
 // straight away instead of navigating to it. (This is the exact mechanism
 // the old "Open" button used — it's simply more reliable than fetching the
 // file into memory and writing it via the Filesystem plugin.)
+function getDownloadUrl(fileUrl) {
+  if (typeof fileUrl !== 'string' || !fileUrl.trim()) {
+    throw new Error('This note does not have a valid PDF link.');
+  }
+
+  let url;
+  try {
+    url = new URL(fileUrl, window.location.href);
+  } catch {
+    throw new Error('This note does not have a valid PDF link.');
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error('This note does not have a valid PDF link.');
+  }
+
+  // Cloudinary otherwise serves raw PDFs inline. fl_attachment makes the
+  // browser download the file instead of trying to render its URL as a page.
+  if (url.hostname === 'res.cloudinary.com' && /\/(raw|image|video)\/upload\//.test(url.pathname) && !url.pathname.includes('/fl_attachment/')) {
+    url.pathname = url.pathname.replace(/\/(raw|image|video)\/upload\//, '/$1/upload/fl_attachment/');
+  }
+
+  return url.href;
+}
+
 async function openExternal(url) {
+  const downloadUrl = getDownloadUrl(url);
   if (isNativeApp()) {
     try {
       const { Browser } = await import('@capacitor/browser');
-      await Browser.open({ url });
+      await Browser.open({ url: downloadUrl });
       return;
     } catch (err) { /* fall through to web behaviour */ }
   }
-  window.open(url, '_blank', 'noopener,noreferrer');
+  // This runs after the ad wait, so window.open may be blocked as a popup.
+  window.location.assign(downloadUrl);
 }
 
 // ── PDF render state ─────────────────────────────────────────────────────────
@@ -528,7 +555,11 @@ async function handleDownloadClick(note) {
   // Redirect straight to the file — this is what actually triggers the
   // download (the file's headers make the browser/OS download it instead
   // of navigating to it), same as the old "Open" button did.
-  openExternal(note.file_url);
+  try {
+    await openExternal(note.file_url);
+  } catch (err) {
+    appStore.showToast(err.message || 'Unable to download this PDF.', 'error');
+  }
 }
 
 // ── PDF.js canvas viewer ────────────────────────────────────────────────────
