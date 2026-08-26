@@ -11,7 +11,6 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         notes: path.resolve(__dirname, 'notes.html'),
-        jobs: path.resolve(__dirname, 'jobs.html'),
         profile: path.resolve(__dirname, 'profile.html'),
         admin: path.resolve(__dirname, 'admin.html'),
         login: path.resolve(__dirname, 'login.html'),

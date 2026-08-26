@@ -62,7 +62,6 @@ class AppStore {
   constructor() {
     this.storageKeyUser = 'academialink_current_user';
     this.storageKeyNotes = 'academialink_notes';
-    this.storageKeyJobs = 'academialink_jobs';
     this.storageKeyReports = 'academialink_reports';
     this.storageKeyUsersList = 'academialink_all_users';
 
@@ -72,9 +71,6 @@ class AppStore {
   initStorage() {
     if (!localStorage.getItem(this.storageKeyNotes)) {
       localStorage.setItem(this.storageKeyNotes, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(this.storageKeyJobs)) {
-      localStorage.setItem(this.storageKeyJobs, JSON.stringify([]));
     }
     if (!localStorage.getItem(this.storageKeyReports)) {
       localStorage.setItem(this.storageKeyReports, JSON.stringify([]));
@@ -96,11 +92,6 @@ class AppStore {
 
   getNotes() {
     const raw = localStorage.getItem(this.storageKeyNotes);
-    return raw ? JSON.parse(raw) : [];
-  }
-
-  getJobs() {
-    const raw = localStorage.getItem(this.storageKeyJobs);
     return raw ? JSON.parse(raw) : [];
   }
 
@@ -251,37 +242,6 @@ class AppStore {
   dismissReport(reportId) {
     const reports = this.getReports().filter((r) => r.id !== reportId);
     localStorage.setItem(this.storageKeyReports, JSON.stringify(reports));
-  }
-
-  addJob(jobData) {
-    const user = this.getCurrentUser();
-    const jobs = this.getJobs();
-
-    const newJob = {
-      id: `job_${Date.now()}`,
-      title: jobData.title,
-      company: jobData.company,
-      companyLogo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80',
-      location: jobData.location,
-      jobType: jobData.jobType,
-      category: jobData.category || 'Software Engineering',
-      salary: jobData.salary || 'Negotiable',
-      postDate: new Date().toLocaleDateString(),
-      deadline: jobData.deadline || 'Open until filled',
-      applyUrl: jobData.applyUrl,
-      requirements: jobData.requirements || ['Degree in relevant field'],
-      description: jobData.description || '',
-      postedBy: user ? user.name : 'Recruiter',
-    };
-
-    jobs.unshift(newJob);
-    localStorage.setItem(this.storageKeyJobs, JSON.stringify(jobs));
-    return newJob;
-  }
-
-  deleteJob(jobId) {
-    const jobs = this.getJobs().filter((j) => j.id !== jobId);
-    localStorage.setItem(this.storageKeyJobs, JSON.stringify(jobs));
   }
 
   toggleUserStaff(userId) {

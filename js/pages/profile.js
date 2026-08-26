@@ -137,7 +137,7 @@ function renderIncompleteProfile(email) {
       <span class="material-symbols-outlined text-4xl opacity-80">account_circle</span>
       <div>
         <p class="text-sm font-bold">Welcome, ${email}!</p>
-        <p class="text-xs opacity-80 mt-0.5">Complete your profile to unlock all features — notes upload, job applications, and more.</p>
+        <p class="text-xs opacity-80 mt-0.5">Complete your profile to unlock all features, including notes upload.</p>
       </div>
     </div>`;
 }

@@ -37,14 +37,6 @@ export function renderHeader(activePage = 'home') {
               Academic Notes
             </a>
 
-            <a href="./jobs.html" class="px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activePage === 'jobs'
-                ? 'bg-white dark:bg-gray-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
-            }">
-              Career Opportunities
-            </a>
-
             ${
               user && user.isStaff
                 ? `
@@ -141,10 +133,6 @@ export function renderHeader(activePage = 'home') {
           <span class="material-symbols-outlined text-base">description</span>
           <span>Notes</span>
         </a>
-        <a href="./jobs.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${activePage === 'jobs' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}">
-          <span class="material-symbols-outlined text-base">work</span>
-          <span>Jobs</span>
-        </a>
         ${
           user && user.isStaff
             ? `<a href="./admin.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">
@@ -227,7 +215,6 @@ export function renderFooter() {
           <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600 dark:text-gray-400 font-medium">
             <a href="./index.html" class="hover:text-indigo-600">Home</a>
             <a href="./notes.html" class="hover:text-indigo-600">Note Repository</a>
-            <a href="./jobs.html" class="hover:text-indigo-600">Jobs & Internships</a>
             <a href="./profile.html" class="hover:text-indigo-600">Student Profile</a>
             <a href="./terms.html" class="hover:text-indigo-600">Terms of Service</a>
             <a href="./privacy-policy.html" class="hover:text-indigo-600">Privacy Policy</a>

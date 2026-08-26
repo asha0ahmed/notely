@@ -1,5 +1,4 @@
 // js/pages/home.js
-import { appStore } from '../store.js';
 import { renderHeader, renderFooter, setupHeaderEvents } from '../components.js';
 import { supabase } from '../supabase.js';
 
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Render sections
   await renderRecentNotes();
-  renderFeaturedJobs();
 });
 
 // ── Recent Notes — Supabase থেকে ─────────────────────────────────────────────
@@ -121,48 +119,4 @@ async function renderRecentNotes() {
         </div>
       </div>`;
   }).join('');
-}
-
-// ── Featured Jobs — appStore থেকে (jobs এখনো Supabase-এ নেই) ────────────────
-function renderFeaturedJobs() {
-  const container = document.getElementById('featured-jobs-container');
-  if (!container) return;
-
-  const jobs = appStore.getJobs().slice(0, 4);
-
-  if (jobs.length === 0) {
-    container.innerHTML = `
-      <div class="col-span-full text-center py-12 bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 p-8 space-y-3">
-        <div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
-          <span class="material-symbols-outlined text-2xl">work</span>
-        </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">No job postings currently available. Check back soon!</p>
-        <a href="./jobs.html" class="inline-block px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md">
-          Explore Jobs Page
-        </a>
-      </div>`;
-    return;
-  }
-
-  container.innerHTML = jobs.map((job) => `
-    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-      <div class="space-y-3">
-        <div class="flex items-start gap-3">
-          <img src="${job.companyLogo}" alt="${job.company}"
-            class="w-10 h-10 rounded-xl object-cover bg-gray-50 border border-gray-200 dark:border-gray-800 shrink-0" />
-          <div>
-            <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase">
-              ${job.jobType}
-            </span>
-            <h3 class="text-sm font-bold text-gray-900 dark:text-white font-headline mt-1 line-clamp-1">${job.title}</h3>
-            <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">${job.company} • ${job.location}</p>
-          </div>
-        </div>
-      </div>
-      <div class="border-t border-gray-100 dark:border-gray-800 pt-3 flex items-center justify-between text-xs">
-        <span class="font-bold text-gray-900 dark:text-white">${job.salary}</span>
-        <a href="./jobs.html" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Apply Now →</a>
-      </div>
-    </div>`
-  ).join('');
 }

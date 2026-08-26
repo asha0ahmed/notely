@@ -80,33 +80,24 @@ async function loadDashboard() {
   const [
     { data: reports },
     { data: allNotes },
-    { data: pendingJobs },
     { data: pendingNotes },
-    { data: allJobs },
     { data: users },
     { data: profiles },
     { data: notesCount },
-    { data: jobsPerUser },
     { data: notesPerUser },
   ] = await Promise.all([
     supabase.from('reports').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
     supabase.from('notes').select('id, title, course, institution_name, institution_type, class_name, is_active, download_count, avg_rating, uploaded_by_id, created_at').order('created_at', { ascending: false }),
-    supabase.from('jobs').select('*').eq('is_active', false).order('created_at', { ascending: false }),
     supabase.from('notes').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
-    supabase.from('jobs').select('id, posted_by_id').eq('is_active', true),
     supabase.from('users').select('id, email, is_staff, is_active, date_joined').order('date_joined', { ascending: false }),
     supabase.from('profiles').select('user_id, full_name, institution_name, institution_type'),
     supabase.from('notes').select('id', { count: 'exact', head: true }),
-    supabase.from('jobs').select('posted_by_id, id').eq('is_active', true),
     supabase.from('notes').select('uploaded_by_id, id'),
   ]);
 
   // Build lookup maps
   const profileMap    = {};
   (profiles || []).forEach((p) => { profileMap[p.user_id] = p; });
-
-  const jobCountMap   = {};
-  (jobsPerUser || []).forEach((j) => { jobCountMap[j.posted_by_id] = (jobCountMap[j.posted_by_id] || 0) + 1; });
 
   const noteCountMap  = {};
   (notesPerUser || []).forEach((n) => { noteCountMap[n.uploaded_by_id] = (noteCountMap[n.uploaded_by_id] || 0) + 1; });
@@ -132,18 +123,15 @@ async function loadDashboard() {
   // Stats
   document.getElementById('stat-reports').textContent = (reports || []).length;
   document.getElementById('stat-notes').textContent   = (allNotes || []).length;
-  document.getElementById('stat-jobs').textContent    = (pendingJobs || []).length;
   document.getElementById('stat-users').textContent   = (users || []).length;
   document.getElementById('reports-count-badge').textContent = (reports || []).length;
-  document.getElementById('jobs-pending-badge').textContent  = (pendingJobs || []).length;
   document.getElementById('notes-pending-badge').textContent = (pendingNotes || []).length;
 
   // Render sections
   renderReports(reports || [], noteTitleMap, reporterMap);
-  renderPendingJobs(pendingJobs || [], profileMap);
   renderPendingNoteApprovals(pendingNotes || [], profileMap);
   renderNotes(allNotes || [], profileMap);
-  renderUsers(users || [], profileMap, noteCountMap, jobCountMap);
+  renderUsers(users || [], profileMap, noteCountMap);
 }
 
 // ── Reports ───────────────────────────────────────────────────────────────────
@@ -193,73 +181,6 @@ function renderReports(reports, noteTitleMap, reporterMap) {
       await supabase.from('notes').update({ is_active: false }).eq('id', noteId);
       await supabase.from('reports').update({ status: 'resolved', reviewed_at: new Date().toISOString() }).eq('id', id);
       showToast('Note hidden and report resolved.', 'success');
-      await loadDashboard();
-    });
-  });
-}
-
-// ── Pending Job Approvals ─────────────────────────────────────────────────────
-function renderPendingJobs(jobs, profileMap) {
-  const container = document.getElementById('admin-jobs-list');
-  if (!container) return;
-
-  if (!jobs.length) {
-    container.innerHTML = `<p class="text-xs text-gray-400 py-4 italic text-center">No pending job approvals.</p>`;
-    return;
-  }
-
-  container.innerHTML = jobs.map((j) => {
-    const poster   = profileMap[j.posted_by_id];
-    const name     = poster?.full_name || `User #${j.posted_by_id}`;
-    const inst     = poster?.institution_name || '—';
-    const jobType  = j.job_type || 'Full-time';
-    const location = j.location || '—';
-    const date     = new Date(j.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-
-    return `
-      <div class="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 p-4 space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div class="space-y-1 min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase">${jobType}</span>
-              <span class="text-[10px] text-gray-400">Posted: ${date}</span>
-            </div>
-            <h3 class="font-bold text-gray-900 dark:text-white text-sm">${j.title}</h3>
-            <p class="text-xs text-gray-500">${j.company} · ${location}</p>
-            <p class="text-[11px] text-indigo-500">Posted by: ${name} (${inst})</p>
-          </div>
-          <div class="flex gap-2 flex-shrink-0">
-            <button class="approve-job-btn px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all"
-              data-id="${j.id}">
-              <span class="material-symbols-outlined text-sm align-middle">check</span> Approve
-            </button>
-            <button class="reject-job-btn px-4 py-2 bg-rose-50 dark:bg-rose-950/50 text-rose-600 text-xs font-bold rounded-xl hover:bg-rose-100 transition-all"
-              data-id="${j.id}">
-              <span class="material-symbols-outlined text-sm align-middle">close</span> Reject
-            </button>
-          </div>
-        </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">${j.description}</p>
-        <a href="${j.apply_link}" target="_blank" class="text-[11px] text-indigo-500 hover:underline flex items-center gap-1">
-          <span class="material-symbols-outlined text-xs">open_in_new</span>${j.apply_link}
-        </a>
-      </div>`;
-  }).join('');
-
-  // Approve
-  container.querySelectorAll('.approve-job-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await supabase.from('jobs').update({ is_active: true }).eq('id', btn.dataset.id);
-      showToast('Job approved and published!', 'success');
-      await loadDashboard();
-    });
-  });
-
-  // Reject (delete)
-  container.querySelectorAll('.reject-job-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await supabase.from('jobs').delete().eq('id', btn.dataset.id);
-      showToast('Job rejected and removed.', 'info');
       await loadDashboard();
     });
   });
@@ -394,7 +315,7 @@ function renderNotes(notes, profileMap) {
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────────
-function renderUsers(users, profileMap, noteCountMap, jobCountMap) {
+function renderUsers(users, profileMap, noteCountMap) {
   const tbody = document.getElementById('users-table-body');
   if (!tbody) return;
 
@@ -407,7 +328,6 @@ function renderUsers(users, profileMap, noteCountMap, jobCountMap) {
     const profile   = profileMap[u.id];
     const inst      = profile?.institution_name || '—';
     const noteCount = noteCountMap[u.id] || 0;
-    const jobCount  = jobCountMap[u.id]  || 0;
     const joined    = new Date(u.date_joined).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 
     return `
@@ -419,9 +339,6 @@ function renderUsers(users, profileMap, noteCountMap, jobCountMap) {
         <td class="py-3 px-2 text-[11px] text-gray-500 max-w-[140px] truncate">${inst}</td>
         <td class="py-3 px-2 text-center">
           <span class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">${noteCount}</span>
-        </td>
-        <td class="py-3 px-2 text-center">
-          <span class="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">${jobCount}</span>
         </td>
         <td class="py-3 px-2">
           <span class="px-2 py-0.5 rounded-full ${u.is_staff ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'} text-[10px] font-bold">
